@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction API Tester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: calc(100vh - 40px);
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow-y: auto;
+        }
+
+        h1 {
+            color: #2d3748;
+            margin-bottom: 30px;
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h2 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .form-section {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .quick-actions button {
+            flex: 1;
+            padding: 10px;
+            font-size: 12px;
+        }
+
+        .response-area {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #response {
+            flex: 1;
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 15px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            border: none;
+            resize: none;
+            margin-top: 10px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-pending { background: #f6ad55; }
+        .status-completed { background: #48bb78; }
+        .status-error { background: #f56565; }
+
+        .metadata-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .loading button {
+            animation: pulse 1.5s infinite;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .panel {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="panel">
+            <h1>🚀 Transaction API Tester</h1>
+            
+            <div class="form-section">
+                <h2>1. Submit Transaction</h2>
+                <form id="transactionForm">
+                    <div class="form-group">
+                        <label for="amount">Amount:</label>
+                        <input type="number" id="amount" step="0.01" value="100.50" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="currency">Currency:</label>
+                        <select id="currency" required>
+                            <option value="USD">USD</option>
+                            <option value="EUR">EUR</option>
+                            <option value="GBP">GBP</option>
+                            <option value="JPY">JPY</option>
+                            <option value="INR">INR</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Description:</label>
+                        <input type="text" id="description" value="Test transaction" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="metadata">Metadata (JSON):</label>
+                        <textarea id="metadata" rows="3" placeholder='{"user_id": "123"}'></textarea>
+                    </div>
+                    <button type="submit">Submit Transaction</button>
+                </form>
+            </div>
+
+            <div class="form-section">
+                <h2>2. Check Transaction Status</h2>
+                <form id="statusForm">
+                    <div class="form-group">
+                        <label for="transactionId">Transaction ID:</label>
+                        <input type="text" id="transactionId" placeholder="550e8400-e29b-41d4-a716-446655440000" required>
+                    </div>
+                    <button type="submit">Check Status</button>
+                </form>
+            </div>
+
+            <div class="form-section">
+                <h2>3. Health Check</h2>
+                <button id="healthCheck">Get Health Status</button>
+            </div>
+
+            <div class="quick-actions">
+                <button onclick="clearResponse()">Clear Response</button>
+                
+            </div>
+        </div>
+
+        <div class="panel response-area">
+            <h2>API Response</h2>
+            <div style="margin-bottom: 10px;">
+                <strong>Base URL:</strong> 
+                <input type="text" id="baseUrl" value="http://localhost:8000" style="display: inline-block; width: 300px; margin-left: 10px;">
+            </div>
+            <textarea id="response" readonly placeholder="API responses will appear here..."></textarea>
+        </div>
+    </div>
+
+    <script>
+        let lastTransactionId = '';
+
+        function getBaseUrl() {
+            return document.getElementById('baseUrl').value.replace(/\/$/, '');
+        }
+
+        function setLoading(element, isLoading) {
+            if (isLoading) {
+                element.classList.add('loading');
+            } else {
+                element.classList.remove('loading');
+            }
+        }
+
+        function formatResponse(response, status, url, method = 'GET') {
+            const timestamp = new Date().toISOString();
+            let statusIcon = '';
+            
+            if (response && response.status) {
+                switch(response.status) {
+                    case 'pending': statusIcon = '<span class="status-indicator status-pending"></span>'; break;
+                    case 'completed': statusIcon = '<span class="status-indicator status-completed"></span>'; break;
+                    case 'error': statusIcon = '<span class="status-indicator status-error"></span>'; break;
+                }
+            }
+
+            return `[${timestamp}] ${method} ${url}
+Status: ${status} ${statusIcon}
+
+${JSON.stringify(response, null, 2)}
+
+${'='.repeat(80)}
+
+`;
+        }
+
+        function appendResponse(content) {
+            const responseEl = document.getElementById('response');
+            responseEl.value = content + responseEl.value;
+            responseEl.scrollTop = 0;
+        }
+
+        function clearResponse() {
+            document.getElementById('response').value = '';
+        }
+
+        function fillSampleData() {
+            document.getElementById('amount').value = '100.50';
+            document.getElementById('currency').value = 'USD';
+            document.getElementById('description').value = 'Test transaction';
+            document.getElementById('metadata').value = '{"user_id": "123"}';
+            
+            if (lastTransactionId) {
+                document.getElementById('transactionId').value = lastTransactionId;
+            }
+        }
+
+        document.getElementById('transactionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            setLoading(this, true);
+
+            const formData = {
+                amount: parseFloat(document.getElementById('amount').value),
+                currency: document.getElementById('currency').value,
+                description: document.getElementById('description').value
+            };
+
+            const metadataValue = document.getElementById('metadata').value.trim();
+            if (metadataValue) {
+                try {
+                    formData.metadata = JSON.parse(metadataValue);
+                } catch (err) {
+                    appendResponse(formatResponse({error: 'Invalid JSON in metadata field'}, 'CLIENT_ERROR', 'N/A', 'POST'));
+                    setLoading(this, false);
+                    return;
+                }
+            }
+
+            const url = `${getBaseUrl()}/api/transactions`;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    mode: 'cors',
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+                const statusText = response.ok ? 'SUCCESS' : 'ERROR';
+                appendResponse(formatResponse(data, `${response.status} ${statusText}`, url, 'POST'));
+
+                if (data.id) {
+                    lastTransactionId = data.id;
+                    document.getElementById('transactionId').value = data.id;
+                }
+
+            } catch (error) {
+                appendResponse(formatResponse({error: error.message}, 'NETWORK_ERROR', url, 'POST'));
+            }
+
+            setLoading(this, false);
+        });
+
+        document.getElementById('statusForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            setLoading(this, true);
+
+            const transactionId = document.getElementById('transactionId').value.trim();
+            if (!transactionId) {
+                appendResponse(formatResponse({error: 'Transaction ID is required'}, 'CLIENT_ERROR', 'N/A', 'GET'));
+                setLoading(this, false);
+                return;
+            }
+
+            const url = `${getBaseUrl()}/api/transactions/${transactionId}`;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    mode: 'cors'
+                });
+                const data = await response.json();
+                const statusText = response.ok ? 'SUCCESS' : 'ERROR';
+                appendResponse(formatResponse(data, `${response.status} ${statusText}`, url, 'GET'));
+
+            } catch (error) {
+                appendResponse(formatResponse({error: error.message}, 'NETWORK_ERROR', url, 'GET'));
+            }
+
+            setLoading(this, false);
+        });
+
+        document.getElementById('healthCheck').addEventListener('click', async function(e) {
+            setLoading(this, true);
+
+            const url = `${getBaseUrl()}/api/health`;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    mode: 'cors'
+                });
+                const data = await response.json();
+                const statusText = response.ok ? 'SUCCESS' : 'ERROR';
+                appendResponse(formatResponse(data, `${response.status} ${statusText}`, url, 'GET'));
+
+            } catch (error) {
+                appendResponse(formatResponse({error: error.message}, 'NETWORK_ERROR', url, 'GET'));
+            }
+
+            setLoading(this, false);
+        });
+
+        // Initialize with sample metadata
+        document.getElementById('metadata').value = '{"user_id": "123"}';
+    </script>
+</body>
+</html>
