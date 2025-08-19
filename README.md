@@ -9,7 +9,8 @@ cd transaction-system
 pip install httpx
 #testing dependencies
 pip install locust
-
+# Run
+locust -f locustfile.py --host http://127.0.0.1:8000
 #Pull the mock test in docker
 
 #Run the Mock Posting Service (Docker)
